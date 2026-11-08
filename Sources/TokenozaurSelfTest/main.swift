@@ -559,6 +559,29 @@ do {
     "Claude pricing selects specific model and aliases"
   )
 
+  func claudeCost(_ modelID: String, _ usage: UsageBreakdown) -> String? {
+    let record = UsageRecord(
+      id: modelID, provider: .claude, sessionID: "pricing", requestID: modelID,
+      modelID: modelID, timestamp: Date(), usage: usage, sourceFile: "/tmp/pricing")
+    return PricingEngine().calculate(
+      AnalysisResult(
+        root: claudePricingMetadata,
+        sessions: [
+          ParsedSession(metadata: claudePricingMetadata, records: [record], parserVersion: "test")
+        ])
+    ).tokenCostUSD.map { NSDecimalNumber(decimal: $0).stringValue }
+  }
+  let mixedUsage = UsageBreakdown(
+    inputUncached: 10_000, inputCachedRead: 50_000, cacheWrite5m: 20_000, cacheWrite1h: 10_000,
+    output: 5_000)
+  check(claudeCost("claude-opus-5-5", mixedUsage) == "0.33", "Claude Opus 5.5 price")
+  check(claudeCost("claude-sonnet-5-5", mixedUsage) == "0.165", "Claude Sonnet 5.5 price")
+  check(claudeCost("claude-haiku-5-5", mixedUsage) == "0.0085", "Claude Haiku 5.5 price")
+  check(
+    claudeCost("claude-haiku-5-5", UsageBreakdown(inputUncached: 150_000, output: 1_000))
+      == "0.0775",
+    "Claude Haiku 5.5 long-prompt price")
+
   let longMetadata = SessionMetadata(
     provider: .claude, sessionID: "long", originator: "claude-desktop", sourceFile: "/tmp/long",
     isDesktop: true)
@@ -620,7 +643,7 @@ do {
     lastCostReport: knownReport)
   let csv = BenchmarkExporter().csv(runs: [exportRun])
   check(
-    csv.contains("webinar-2026-09-02-v2") && csv.contains("BUILD_CODEX_01")
+    csv.contains("pricing-2026-11-08-v3") && csv.contains("BUILD_CODEX_01")
       && csv.contains("normalizer_versions"), "Auditable CSV export")
 } catch {
   failures.append("Unexpected error: \(error)")
