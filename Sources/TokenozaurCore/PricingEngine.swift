@@ -99,9 +99,27 @@ public struct PriceCatalog: Codable, Equatable, Sendable {
     let formatter = ISO8601DateFormatter()
     let date = formatter.date(from: "2026-09-02T00:00:00Z") ?? Date(timeIntervalSince1970: 0)
     return PriceCatalog(
-      snapshotID: "pricing-2026-11-08-v3",
+      snapshotID: "pricing-2026-11-09-v3",
       frozenAt: date,
       prices: [
+        ModelPrice(
+          provider: .codex,
+          modelID: "gpt-6.1-sol",
+          effectiveFrom: date,
+          inputPerMillion: 2,
+          cachedReadPerMillion: Decimal(string: "0.1")!,
+          cacheWrite5mPerMillion: Decimal(string: "2.5")!,
+          cacheWrite1hPerMillion: Decimal(string: "2.5")!,
+          outputPerMillion: 10,
+          fastMultiplier: 2,
+          longContextRule: LongContextRule(
+            thresholdInputTokens: 272_000,
+            inputMultiplier: 2,
+            outputMultiplier: Decimal(string: "1.5")!
+          ),
+          sourceURL: "https://developers.openai.com/api/docs/models/gpt-6.1-sol",
+          note: "API-equivalent pricing; cache write uses the documented 30m write rate (1.25× input)."
+        ),
         ModelPrice(
           provider: .codex,
           modelID: "gpt-5.6-sol",

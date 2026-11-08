@@ -582,6 +582,24 @@ do {
       == "0.0775",
     "Claude Haiku 5.5 long-prompt price")
 
+  let gpt61Metadata = SessionMetadata(
+    provider: .codex, sessionID: "gpt61", originator: "codex_cli_rs", sourceFile: "/tmp/gpt61",
+    isDesktop: false)
+  let gpt61Record = UsageRecord(
+    id: "gpt61", provider: .codex, sessionID: "gpt61", requestID: "gpt61",
+    modelID: "gpt-6.1-sol", timestamp: Date(),
+    usage: UsageBreakdown(inputUncached: 100_000, inputCachedRead: 100_000, output: 10_000),
+    serviceTier: .standard, sourceFile: "/tmp/gpt61")
+  check(
+    PricingEngine().calculate(
+      AnalysisResult(
+        root: gpt61Metadata,
+        sessions: [
+          ParsedSession(metadata: gpt61Metadata, records: [gpt61Record], parserVersion: "test")
+        ])
+    ).tokenCostUSD.map { NSDecimalNumber(decimal: $0).stringValue } == "0.31",
+    "GPT-6.1 Sol price")
+
   let longMetadata = SessionMetadata(
     provider: .claude, sessionID: "long", originator: "claude-desktop", sourceFile: "/tmp/long",
     isDesktop: true)
@@ -643,7 +661,7 @@ do {
     lastCostReport: knownReport)
   let csv = BenchmarkExporter().csv(runs: [exportRun])
   check(
-    csv.contains("pricing-2026-11-08-v3") && csv.contains("BUILD_CODEX_01")
+    csv.contains("pricing-2026-11-09-v3") && csv.contains("BUILD_CODEX_01")
       && csv.contains("normalizer_versions"), "Auditable CSV export")
 } catch {
   failures.append("Unexpected error: \(error)")
